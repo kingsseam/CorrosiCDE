@@ -80,7 +80,6 @@ class ModelWrapper:
 
 def to_image(tensor):
     tensor = tensor.squeeze(0).permute(1, 2, 0)
-    arr = tensor.detach().cpu().numpy()
     arr = (arr - arr.min()) / (arr.max() - arr.min())
     arr = arr * 255
     return arr.astype('uint8')
@@ -151,7 +150,6 @@ def on_reset(points, image, state):
 
 
 def on_undo(points, image, state, size):
-    image = to_image(state['sample'])
 
     if len(points['target']) < len(points['handle']):
         points['handle'] = points['handle'][:-1]
@@ -207,7 +205,6 @@ def on_save_files(image, state):
     os.makedirs('draggan_tmp', exist_ok=True)
     image_name = f'draggan_tmp/image_{uuid.uuid4()}.png'
     video_name = f'draggan_tmp/video_{uuid.uuid4()}.mp4'
-    imageio.imsave(image_name, image)
     imageio.mimsave(video_name, state['history'])
     return [image_name, video_name]
 
@@ -277,13 +274,11 @@ def main():
             """,
         )
         state = gr.State({
-            'latent': latent,
             'noise': noise,
             'F': F,
             'sample': sample,
             'history': []
         })
-        points = gr.State({'target': [], 'handle': []})
         size = gr.State(CKPT_SIZE[DEFAULT_CKPT])
 
         with gr.Row():
